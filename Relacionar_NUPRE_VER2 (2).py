@@ -88,19 +88,19 @@ print("consultanumerosprediales: ",resu)
 #print("extensiones y T_id:", extensiones)
 #print("contenido de la tabla temporal:", resultados_temp)
 
-#Consulta para definir el tipo de archivo
-consulta2 = """
-update cca_adjunto
-set tipo_archivo = case 
-    when cca_construccion_adjunto is not null and cca_unidadconstruccion_adjunto is not null then 'construcciones'
-    when cca_fuenteadminstrtiva_adjunto is not null then 'fuenteadministrativa'
-    when cca_interesado_adjunto is not null then 'interesado'
-    when cca_unidadconstruccion_adjunto is not null then 'unidad de construcción'
-    when cca_predio_adjunto is not null then 'predio'
-    else tipo_archivo
-end;
-"""
-cursor.execute(consulta2)
+# #Consulta para definir el tipo de archivo
+# consulta2 = """
+# update cca_adjunto
+# set tipo_archivo = case 
+#     when cca_construccion_adjunto is not null and cca_unidadconstruccion_adjunto is not null then 'construcciones'
+#     when cca_fuenteadminstrtiva_adjunto is not null then 'fuenteadministrativa'
+#     when cca_interesado_adjunto is not null then 'interesado'
+#     when cca_unidadconstruccion_adjunto is not null then 'unidad de construcción'
+#     when cca_predio_adjunto is not null then 'predio'
+#     else tipo_archivo
+# end;
+# """
+# cursor.execute(consulta2)
 
 consultaDependencia = """
 update cca_adjunto
@@ -135,7 +135,7 @@ FROM cca_adjunto AS adjunto
 JOIN cca_construccion AS cons ON cons.T_id = adjunto.cca_construccion_adjunto
 JOIN cca_predio AS predio ON predio.T_id = cons.predio
 JOIN temp_extensiones AS e ON adjunto.T_Id = e.extension
-WHERE adjunto.tipo_archivo = 'construcciones';
+WHERE cca_construccion_adjunto is not null and dependencia_ucons is null and relacion_soporte = 3;        
 """
 
 
@@ -151,7 +151,7 @@ SET ruta_modificada = (
     FROM temp_rutas_unicas
     WHERE temp_rutas_unicas.T_id = cca_adjunto.T_Id
 )
-WHERE tipo_archivo = 'construcciones';
+WHERE cca_construccion_adjunto is not null and dependencia_ucons is null and relacion_soporte = 3;  
 """
 
 
@@ -171,7 +171,7 @@ case
                 join cca_predio as predio on predio.T_id = d.predio
                 join temp_extensiones as e on adjunto.T_id = e.extension
                 where cca_adjunto.cca_fuenteadminstrtiva_adjunto = cf.T_Id
-) WHERE tipo_archivo = 'fuenteadministrativa';
+) WHERE cca_fuenteadminstrtiva_adjunto is not null and relacion_soporte = 1;
 """ 
 
 i = """
@@ -192,7 +192,7 @@ SET ruta_modificada = (
     JOIN temp_extensiones AS e ON adjunto.T_id = e.extension
     WHERE cca_adjunto.cca_interesado_adjunto = i.T_Id
     GROUP BY adjunto.cca_interesado_adjunto
-) WHERE tipo_archivo = 'interesado';
+) WHERE cca_interesado_adjunto is not null and relacion_soporte = 2;
 
 """
 
@@ -213,9 +213,7 @@ JOIN cca_unidadconstruccion AS u ON u.T_Id = adjunto.cca_unidadconstruccion_adju
 JOIN cca_construccion AS c ON u.construccion = c.T_Id
 JOIN cca_predio AS predio ON predio.T_Id = c.predio
 JOIN temp_extensiones AS e ON adjunto.T_id = e.extension
-WHERE adjunto.cca_unidadconstruccion_adjunto = u.T_Id 
-  AND adjunto.cca_construccion_adjunto IS NULL 
-  AND adjunto.tipo_archivo = 'unidad de construcción';
+WHERE adjunto.cca_unidadconstruccion_adjunto = u.T_Id  or adjunto.cca_construccion_adjunto is null and relacion_soporte = 4 and dependencia_ucons is not null ;
 """
 
 p= """
@@ -229,7 +227,7 @@ SET ruta_modificada = (
     FROM temp_rutas_unicas2
     WHERE temp_rutas_unicas2.T_id = cca_adjunto.T_Id
 )
-WHERE tipo_archivo = 'unidad de construcción';
+WHERE cca_unidadconstruccion_adjunto is not null or cca_construccion_adjunto is null and relacion_soporte = 4 and dependencia_ucons is not null ;
 
 """
 
@@ -247,7 +245,7 @@ case
                 join cca_predio as predio on predio.T_id = adjunto.cca_predio_adjunto
                 join temp_extensiones as e on adjunto.T_id = e.extension
                 WHERE cca_adjunto.cca_predio_adjunto = predio.T_Id  )
-            WHERE tipo_archivo = 'predio';     
+            WHERE cca_predio_adjunto is not null;     
 
 """
 cursor.execute(e)
