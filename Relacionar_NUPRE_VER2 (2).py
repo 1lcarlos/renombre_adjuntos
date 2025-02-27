@@ -105,11 +105,11 @@ print("consultanumerosprediales: ",resu)
 consultaDependencia = """
 update cca_adjunto
 set dependencia_ucons = case 
-    when dependencia_ucons = '1' and tipo_archivo = 'unidad de construcción' then 'Estructura'
-    when dependencia_ucons = '2' and tipo_archivo = 'unidad de construcción' then 'Acabados_Principales'
-    when dependencia_ucons = '3' and tipo_archivo = 'unidad de construcción' then 'Baño'
-    when dependencia_ucons = '4' and tipo_archivo = 'unidad de construcción' then 'Cocina'
-    when dependencia_ucons = '5' and tipo_archivo = 'unidad de construcción' then 'Complemento_Industria'
+    when dependencia_ucons = '1' and relacion_soporte = '4' then 'Estructura'
+    when dependencia_ucons = '2' and relacion_soporte = '4' then 'Acabados_Principales'
+    when dependencia_ucons = '3' and relacion_soporte = '4' then 'Baño'
+    when dependencia_ucons = '4' and relacion_soporte = '4' then 'Cocina'
+    when dependencia_ucons = '5' and relacion_soporte = '4' then 'Complemento_Industria'
     else dependencia_ucons
 end;
 """
