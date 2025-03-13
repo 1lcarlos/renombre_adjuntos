@@ -80,45 +80,6 @@ cursor.execute(consulta2)
 resu = cursor.fetchall() 
 print("consultanumerosprediales: ",resu)
 
-###############################################################################################################################################################################
-
-
-# Mostrar la lista de extensiones con T_id y los resultados de la tabla temporal, verificacion por si el codigo falla
-# util para verificar que esta captando
-#print("extensiones y T_id:", extensiones)
-#print("contenido de la tabla temporal:", resultados_temp)
-
-# #Consulta para definir el tipo de archivo
-# consulta2 = """
-# update cca_adjunto
-# set tipo_archivo = case 
-#     when cca_construccion_adjunto is not null and cca_unidadconstruccion_adjunto is not null then 'construcciones'
-#     when cca_fuenteadminstrtiva_adjunto is not null then 'fuenteadministrativa'
-#     when cca_interesado_adjunto is not null then 'interesado'
-#     when cca_unidadconstruccion_adjunto is not null then 'unidad de construcción'
-#     when cca_predio_adjunto is not null then 'predio'
-#     else tipo_archivo
-# end;
-# """
-# cursor.execute(consulta2)
-
-consultaDependencia = """
-update cca_adjunto
-set dependencia_ucons = case 
-    when dependencia_ucons = '1' and relacion_soporte = '4' then 'Estructura'
-    when dependencia_ucons = '2' and relacion_soporte = '4' then 'Acabados_Principales'
-    when dependencia_ucons = '3' and relacion_soporte = '4' then 'Baño'
-    when dependencia_ucons = '4' and relacion_soporte = '4' then 'Cocina'
-    when dependencia_ucons = '5' and relacion_soporte = '4' then 'Complemento_Industria'
-    else dependencia_ucons
-end;
-"""
-cursor.execute(consultaDependencia)
-
-
-# ##si sirveee
-
-
 e="""
 -- Crear una tabla temporal para almacenar las rutas base y su contador
 CREATE TEMPORARY TABLE temp_rutas_unicas AS
@@ -193,7 +154,6 @@ SET ruta_modificada = (
     WHERE cca_adjunto.cca_interesado_adjunto = i.T_Id
     GROUP BY adjunto.cca_interesado_adjunto
 ) WHERE cca_interesado_adjunto is not null and relacion_soporte = 2;
-
 """
 
 h= """
@@ -201,11 +161,36 @@ h= """
 CREATE TEMPORARY TABLE temp_rutas_unicas2 AS
 SELECT 
     adjunto.T_Id AS T_id,
-    'DCIM/' || 'UC_' || predio.numero_predial || '_' || adjunto.dependencia_ucons AS RutaBase,
+    'DCIM/' || 'UC_' || predio.numero_predial || '_' || 
+    CASE 
+        WHEN adjunto.dependencia_ucons = '1' AND adjunto.relacion_soporte = '4' THEN 'Estructura'
+        WHEN adjunto.dependencia_ucons = '2' AND adjunto.relacion_soporte = '4' THEN 'Acabados_Principales'
+        WHEN adjunto.dependencia_ucons = '3' AND adjunto.relacion_soporte = '4' THEN 'Baño'
+        WHEN adjunto.dependencia_ucons = '4' AND adjunto.relacion_soporte = '4' THEN 'Cocina'
+        WHEN adjunto.dependencia_ucons = '5' AND adjunto.relacion_soporte = '4' THEN 'Complemento_Industria'
+        ELSE adjunto.dependencia_ucons    
+    end 
+    AS RutaBase,
     e.T_id AS Extension,
-    COUNT(*) OVER (PARTITION BY 'DCIM/' || 'UC_' || predio.numero_predial || '_' || adjunto.dependencia_ucons || e.T_id) AS Duplicados,
+    COUNT(*) OVER (PARTITION BY 'DCIM/' || 'UC_' || predio.numero_predial || '_' || 
+    CASE 
+        WHEN adjunto.dependencia_ucons = '1' AND adjunto.relacion_soporte = '4' THEN 'Estructura'
+        WHEN adjunto.dependencia_ucons = '2' AND adjunto.relacion_soporte = '4' THEN 'Acabados_Principales'
+        WHEN adjunto.dependencia_ucons = '3' AND adjunto.relacion_soporte = '4' THEN 'Baño'
+        WHEN adjunto.dependencia_ucons = '4' AND adjunto.relacion_soporte = '4' THEN 'Cocina'
+        WHEN adjunto.dependencia_ucons = '5' AND adjunto.relacion_soporte = '4' THEN 'Complemento_Industria'
+        ELSE adjunto.dependencia_ucons    
+    end || e.T_id) AS Duplicados,
     ROW_NUMBER() OVER (
-        PARTITION BY 'DCIM/' || 'UC_' || predio.numero_predial || '_' || adjunto.dependencia_ucons || e.T_id 
+        PARTITION BY 'DCIM/' || 'UC_' || predio.numero_predial || '_' ||
+    CASE 
+        WHEN adjunto.dependencia_ucons = '1' AND adjunto.relacion_soporte = '4' THEN 'Estructura'
+        WHEN adjunto.dependencia_ucons = '2' AND adjunto.relacion_soporte = '4' THEN 'Acabados_Principales'
+        WHEN adjunto.dependencia_ucons = '3' AND adjunto.relacion_soporte = '4' THEN 'Baño'
+        WHEN adjunto.dependencia_ucons = '4' AND adjunto.relacion_soporte = '4' THEN 'Cocina'
+        WHEN adjunto.dependencia_ucons = '5' AND adjunto.relacion_soporte = '4' THEN 'Complemento_Industria'
+        ELSE adjunto.dependencia_ucons                   
+    end || e.T_id 
         ORDER BY adjunto.T_Id
     ) AS Sufijo
 FROM cca_adjunto AS adjunto
